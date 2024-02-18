@@ -24,10 +24,11 @@ class WatchingListener(threading.Thread):
                 for session in self.plex_api.server.sessions():
                     for item in session:
                         title = self.plex_api.get_name(item)
+                        previous = self.playing
+                        current = self.qtorrent.stream_torrent(True, title)
                         # stop previous
-                        if self.playing is not None:
+                        if previous is not None and previous != current:
                             self.qtorrent.pause_torrent(self.playing)
-                        self.playing = self.qtorrent.stream_torrent(True, title)
                         break
                     break
             elif notification["state"] == "stopped":

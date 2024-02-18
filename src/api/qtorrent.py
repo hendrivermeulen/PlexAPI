@@ -114,7 +114,7 @@ class QTorrentAPI(Thread):
                     return torrent.hash
 
             attempts += 1
-            if attempts > 3:  # after 3 seconds of trying
+            if attempts > 5:
                 print("Magnet was never added")
                 return None
 
@@ -177,7 +177,7 @@ class QTorrentAPI(Thread):
                     return is_streamable
 
             attempts += 1
-            if attempts > 3:  # after 3 seconds of trying
+            if attempts > 5:
                 print("Magnet was never added")
                 break
 
