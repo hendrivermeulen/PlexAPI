@@ -27,6 +27,7 @@ class TorrentBrowser:
 
     def movie_search(self, title: string):
         results = self.pirate_search(title, TYPE.MOVIE) + self.yts_direct_movie_query(title)
+        results = list(dict.fromkeys(results))
         print("Found:", len(results))
         return results
 
@@ -41,12 +42,14 @@ class TorrentBrowser:
 
         magnets = []
         for url in urls:
-            print(url)
             self.driver.get(url)
             frame = self.driver.find_element(by=By.ID, value="details")
             div = frame.find_element(by=By.CLASS_NAME, value="download")
             link = div.find_element(by=By.TAG_NAME, value="a")
-            magnets.append(link.get_attribute("href"))
+            magnet = link.get_attribute("href")
+            if magnet not in magnets:
+                print("Found", url)
+                magnets.append(magnet)
 
         return magnets
 
@@ -134,6 +137,17 @@ class TorrentBrowser:
 
         return None
 
+    def extract(self, keyword, links):
+        sources = []
+        for link in links:
+            link_title = link.get_attribute("title")
+            link_href = link.get_attribute("href")
+            if keyword in link_title and " Torrent" in link_title and "/torrent/download/" in link_href:
+                if link_href not in sources:
+                    print("Found", link_title)
+                    sources.append(link_href)
+        return sources
+
     def yts_direct_movie_query(self, title: string) -> []:
         try:
             query = "https://yts.mx/movies/" + parse_for_url(title)
@@ -145,12 +159,9 @@ class TorrentBrowser:
             links = movie_info.find_elements(by=By.TAG_NAME, value="a")
             # sort results
             sources = []
-            for link in links:
-                link_title = link.get_attribute("title")
-                link_href = link.get_attribute("href")
-                if " Torrent" in link_title and "/torrent/download/" in link_href:
-                    if link_href not in sources:
-                        sources.append(link_href)
+            sources += self.extract("2160p", links)
+            sources += self.extract("1080p", links)
+            sources += self.extract("720p", links)
             return sources
         except:
             return []

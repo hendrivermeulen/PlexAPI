@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 import traceback
@@ -39,7 +40,7 @@ class WatchlistScrapper(threading.Thread):
                 time.sleep(sleep_time_seconds)
                 self.time_passed_seconds += sleep_time_seconds
             except Exception as e:
-                    traceback.print_exc()
+                traceback.print_exc()
 
     def update(self):
         for item in self.plex_api.get_watchlist():
@@ -52,21 +53,30 @@ class WatchlistScrapper(threading.Thread):
                 self.no_torrents = []
                 self.time_passed_seconds = 0
 
+            if item.type == "movie":
+                if title in os.listdir(self.plex_api.library_path + "/Movies"):
+                    continue
+            else:
+                if title in os.listdir(self.plex_api.library_path + "/TV-Shows"):
+                    continue
+
             if item not in self.no_torrents:
                 urls = None
                 if item.type == "movie":
-                    print("Movie:", title)
+                    print("Looking for Movie:", title)
                     urls = self.torrent_api.movie_search(title)
-
-                if item.type == "show":
+                else:
+                    print("TV Show not yet supported")
                     continue
 
-                i = 1
                 if urls is not None and len(urls) > 0:
                     for url in urls:
                         print("Adding", url)
-                        self.qtorrent.add_torrent(url, item.type == "movie", title, i)
-                        i += 1
+                        if self.qtorrent.add_torrent(url, item.type == "movie", title):
+                            print("Found streamable: ", url)
+                            break
+                        else:
+                            print("Not streamable")
                     self.alreadyHave.append(title)
                 else:
                     self.no_torrents.append(item)

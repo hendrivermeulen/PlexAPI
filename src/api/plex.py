@@ -13,6 +13,7 @@ class PlexAPI:
         plex_token = os.environ.get("PLEX_TOKEN")
 
         self.server = PlexServer(plex_url, plex_token)
+        self.library_path = "/var/lib/plexmediaserver/Library/"
 
     def get_watchlist(self) -> list:
         return self.server.myPlexAccount().watchlist()
