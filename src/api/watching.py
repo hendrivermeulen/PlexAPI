@@ -29,11 +29,12 @@ class WatchingListener(threading.Thread):
                         if self.playing_title == title:
                             return
                         else:
+                            print("Started playing:", self.playing_title)
                             current = self.qtorrent.stream_torrent(True, title)
+                            self.playing_title = title
                         # stop previous
                         if previous is not None and previous != current:
-                            self.qtorrent.pause_torrent(self.playing)
-                            self.playing_title = title
+                            self.qtorrent.pause_torrent(previous)
                         self.playing = current
                         break
                     break
