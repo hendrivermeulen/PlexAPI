@@ -15,6 +15,7 @@ class WatchingListener(threading.Thread):
         self.qtorrent = QTorrentAPI(self.plex_api)
         self.alert_listener = self.plex_api.server.startAlertListener(self.listen)
         self.playing = None
+        self.playing_title = None
         threading.Thread(target=self.start_stop_timeout()).start()
 
     def listen(self, data):
@@ -25,10 +26,14 @@ class WatchingListener(threading.Thread):
                     for item in session:
                         title = self.plex_api.get_name(item)
                         previous = self.playing
-                        current = self.qtorrent.stream_torrent(True, title)
+                        if self.playing_title == title:
+                            return
+                        else:
+                            current = self.qtorrent.stream_torrent(True, title)
                         # stop previous
                         if previous is not None and previous != current:
                             self.qtorrent.pause_torrent(self.playing)
+                            self.playing_title = title
                         self.playing = current
                         break
                     break
