@@ -29,6 +29,7 @@ class WatchingListener(threading.Thread):
                         # stop previous
                         if previous is not None and previous != current:
                             self.qtorrent.pause_torrent(self.playing)
+                        self.playing = current
                         break
                     break
             elif notification["state"] == "stopped":
