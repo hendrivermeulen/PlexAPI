@@ -47,7 +47,7 @@ class WatchingListener(threading.Thread):
         while True:
             stop_semaphore.acquire()
             temp = self.playing
-            time.sleep(15)
+            time.sleep(60)
             if temp == self.playing:
                 if self.playing is not None:
                     self.qtorrent.pause_torrent(self.playing)
