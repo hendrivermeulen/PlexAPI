@@ -29,9 +29,9 @@ class WatchingListener(threading.Thread):
                         if self.playing_title == title:
                             return
                         else:
-                            print("Started playing:", self.playing_title)
-                            current = self.qtorrent.stream_torrent(True, title)
                             self.playing_title = title
+                            print("Started playing:", title)
+                            current = self.qtorrent.stream_torrent(True, item)
                         # stop previous
                         if previous is not None and previous != current:
                             self.qtorrent.pause_torrent(previous)
@@ -51,6 +51,8 @@ class WatchingListener(threading.Thread):
             if temp == self.playing:
                 if self.playing is not None:
                     self.qtorrent.pause_torrent(self.playing)
+                    self.playing = None
+                    self.playing_title = None
                 else:
                     print("Nothing to pause")
 

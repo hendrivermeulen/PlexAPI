@@ -22,13 +22,13 @@ class WatchlistScrapper(threading.Thread):
 
         for item in self.plex_api.get_watchlist():
             title = self.plex_api.get_name(item)
-            alreadyHas = False
+            already_has = False
             for torrent in self.qtorrent.get_torrents():
-                if contains_at_least_half(title, torrent.name):
-                    alreadyHas = True
+                if contains_at_least_half(item.title, torrent.name):
+                    already_has = True
                     break
 
-            if alreadyHas:
+            if already_has:
                 self.alreadyHave.append(title)
 
     def run(self):
@@ -41,6 +41,16 @@ class WatchlistScrapper(threading.Thread):
                 self.time_passed_seconds += sleep_time_seconds
             except Exception as e:
                 traceback.print_exc()
+
+    def find(self, urls, item, title):
+        for url in urls:
+            print("Adding", url)
+            if self.qtorrent.add_torrent(url, item.type == "movie", title):
+                print("Found streamable: ", url)
+                return True
+            else:
+                print("Not streamable")
+        return False
 
     def update(self):
         for item in self.plex_api.get_watchlist():
@@ -61,7 +71,6 @@ class WatchlistScrapper(threading.Thread):
                     continue
 
             if item not in self.no_torrents:
-                urls = None
                 if item.type == "movie":
                     print("Looking for Movie:", title)
                     urls = self.torrent_api.movie_search(title)
@@ -70,13 +79,5 @@ class WatchlistScrapper(threading.Thread):
                     continue
 
                 if urls is not None and len(urls) > 0:
-                    for url in urls:
-                        print("Adding", url)
-                        if self.qtorrent.add_torrent(url, item.type == "movie", title):
-                            print("Found streamable: ", url)
-                            break
-                        else:
-                            print("Not streamable")
-                    self.alreadyHave.append(title)
-                else:
-                    self.no_torrents.append(item)
+                    self.find(urls, item, title)
+                self.no_torrents.append(item)

@@ -13,8 +13,6 @@ import qbittorrentapi
 from src.api.plex import PlexAPI
 from src.api.utils import contains_at_least_half
 
-extract_waiting_lock = threading.Semaphore(0)
-
 
 def extract_task(from_file, to_file, secs):
     while True:
@@ -31,29 +29,6 @@ def extract_task(from_file, to_file, secs):
         except:
             time.sleep(secs/2)
             pass
-    extract_waiting_lock.release(1)
-
-
-def extract(from_file, to_file, secs, timeout):
-    thread = threading.Thread(target=extract_task, args=[from_file, to_file, secs])
-    thread.start()
-    return extract_waiting_lock.acquire(timeout=timeout)
-
-
-def check_streamable(from_file, to_file, secs):
-    init_time = 1
-    expected = secs/1.5
-    # wait to start
-    if not extract(from_file, to_file, init_time, 5):
-        print("Initialization timeout")
-        return False
-    # extract
-    if not extract(from_file, to_file, secs + init_time, expected):
-        os.system("pkill ffmpeg")
-        os.remove(to_file)
-        print("Not keeping up")
-        return False
-    return True
 
 
 class QTorrentAPI(Thread):
@@ -77,27 +52,28 @@ class QTorrentAPI(Thread):
             except:
                 traceback.print_exc()
 
-    def pause_torrent(self, hash):
+    def pause_torrent(self, torrent_hash):
         print("Torrent paused")
-        self.client.torrents_pause(torrent_hashes=hash)
+        self.client.torrents_pause(torrent_hashes=torrent_hash)
 
-    def stream_torrent(self, is_movie: bool, title: string):
+    def stream_torrent(self, is_movie: bool, item):
+        print("Looking for", item.title)
+        for torrent in self.client.torrents_info():
+            if contains_at_least_half(item.title, torrent.name):
+                self.client.torrents_resume(torrent_hashes=torrent.hash)
+                print("Torrent resumed")
+                return torrent.hash
+
         save_path = self.plex_api.library_path
         if is_movie:
             save_path += "Movies"
         else:
             save_path += "TV-Shows"
 
-        save_path += "/" + title
+        save_path += "/" + self.plex_api.get_name(item)
         torrent_src_file = open(save_path + "/magnet", "r")
         magnet = torrent_src_file.read()
         torrent_src_file.close()
-
-        for torrent in self.client.torrents_info():
-            if contains_at_least_half(title, torrent.name):
-                self.client.torrents_resume(torrent_hashes=torrent.hash)
-                print("Torrent resumed")
-                return torrent.hash
 
         if magnet is not None:
             print("Stored Magnet Found")
@@ -105,11 +81,12 @@ class QTorrentAPI(Thread):
                 urls=magnet, is_sequential_download=True, save_path=save_path)
         else:
             print("Could not find magnet for playing item")
+            return None
 
         attempts = 0
         while True:
             for torrent in self.client.torrents_info():
-                if contains_at_least_half(title, torrent.name):
+                if contains_at_least_half(item.title, torrent.name):
                     print("Torrent started")
                     return torrent.hash
 
@@ -160,7 +137,21 @@ class QTorrentAPI(Thread):
                     os.makedirs(fake_file_folder, exist_ok=True)
 
                     real_file = temp_path + biggest_file["name"]
-                    is_streamable = check_streamable(real_file, fake_file, 5)
+
+                    count = 0
+                    prev_eta = 100*365*24*3600  # 100 years
+                    is_streamable = False
+                    while count < 10:
+                        info = self.client.torrents_info(torrent_hashes=torrent.hash)[0]
+                        eta = info['eta']
+                        if eta < 3600:
+                            extract_task(real_file, fake_file, 3)
+                            is_streamable = True
+                            break
+                        time.sleep(1)
+                        if eta/prev_eta < 0.9:
+                            count += 1
+                        prev_eta = eta
 
                     # clean up qTorrent
                     self.client.torrents_delete(delete_files=True, torrent_hashes=torrent.hash)
