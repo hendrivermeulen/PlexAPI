@@ -45,7 +45,7 @@ class WatchlistScrapper(threading.Thread):
     def find(self, urls, item, title):
         for url in urls:
             print("Adding", url)
-            if self.qtorrent.add_torrent(url, item.type == "movie", title):
+            if self.qtorrent.add_torrent(url, item.type == "movie", title, item.duration/1000):
                 print("Found streamable: ", url)
                 return True
             else:
@@ -75,7 +75,9 @@ class WatchlistScrapper(threading.Thread):
                     print("Looking for Movie:", title)
                     urls = self.torrent_api.movie_search(title)
                 else:
-                    print("TV Show not yet supported")
+                    print("Looking for TV-Show:", title)
+                    urls = self.torrent_api.series_search(title)
+                    print(urls)
                     continue
 
                 if urls is not None and len(urls) > 0:

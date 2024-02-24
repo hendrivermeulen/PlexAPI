@@ -27,7 +27,7 @@ def extract_task(from_file, to_file, secs):
             )
             break
         except:
-            time.sleep(secs/2)
+            time.sleep(secs / 2)
             pass
 
 
@@ -52,8 +52,8 @@ class QTorrentAPI(Thread):
             except:
                 traceback.print_exc()
 
-    def pause_torrent(self, torrent_hash):
-        print("Torrent paused")
+    def pause_torrent(self, torrent_hash, title):
+        print("Torrent paused", title)
         self.client.torrents_pause(torrent_hashes=torrent_hash)
 
     def stream_torrent(self, is_movie: bool, item):
@@ -61,7 +61,7 @@ class QTorrentAPI(Thread):
         for torrent in self.client.torrents_info():
             if contains_at_least_half(item.title, torrent.name):
                 self.client.torrents_resume(torrent_hashes=torrent.hash)
-                print("Torrent resumed")
+                print("Torrent resumed", item.title)
                 return torrent.hash
 
         save_path = self.plex_api.library_path
@@ -97,73 +97,44 @@ class QTorrentAPI(Thread):
 
             time.sleep(1)
 
-
-    def add_torrent(self, magnet, is_movie: bool, title: string):
-        temp_path = self.plex_api.library_path + "temp/"
+    def add_torrent(self, magnet, is_movie: bool, title: string, duration_s):
         save_path = self.plex_api.library_path
         if is_movie:
             save_path += "Movies"
         else:
             save_path += "TV-Shows"
+        save_path += "/" + title
         self.client.torrents_add(
-            urls=magnet, is_sequential_download=True, save_path=temp_path)
+            urls=magnet, is_sequential_download=True, save_path=save_path)
 
         attempts = 0
         while True:
             for torrent in self.client.torrents_info():
                 if contains_at_least_half(title, torrent.name):
-                    required_bytes = 0
-                    while True:
-                        info = self.client.torrents_properties(torrent.hash)
-                        total_downloaded = info["total_downloaded"]
-                        if total_downloaded > required_bytes:
-                            break
-                        time.sleep(0.1)
-                    files = self.client.torrents_files(torrent.hash)
-                    max_size = -1
-                    biggest_file = None
-
-                    for file in files:
-                        if biggest_file is None or file["size"] > max_size:
-                            max_size = file["size"]
-                            biggest_file = file
-
-                    biggest_file_name_with_extension = os.path.basename(biggest_file["name"])
-                    download_folder = os.path.dirname(biggest_file["name"])
-
-                    fake_file_base_folder = save_path + "/" + title
-                    fake_file_folder = fake_file_base_folder + "/" + download_folder
-                    fake_file = fake_file_folder + "/" + biggest_file_name_with_extension
-                    os.makedirs(fake_file_folder, exist_ok=True)
-
-                    real_file = temp_path + biggest_file["name"]
-
                     count = 0
-                    prev_eta = 100*365*24*3600  # 100 years
+                    prev_eta = 100 * 365 * 24 * 3600  # 100 years
                     is_streamable = False
-                    while count < 10:
+                    while count < 5:
                         info = self.client.torrents_info(torrent_hashes=torrent.hash)[0]
                         eta = info['eta']
-                        if eta < 3600:
-                            extract_task(real_file, fake_file, 3)
+                        if eta < duration_s*0.70:
                             is_streamable = True
                             break
-                        time.sleep(1)
-                        if eta/prev_eta < 0.9:
+                        time.sleep(3)
+                        if eta / prev_eta < 0.8:
+                            print("Speeding up")
+                            count = 0
+                        else:
+                            print("Too slow")
                             count += 1
                         prev_eta = eta
 
-                    # clean up qTorrent
-                    self.client.torrents_delete(delete_files=True, torrent_hashes=torrent.hash)
-
                     if is_streamable:
-                        # safe
-                        torrent_src_file = open(fake_file_base_folder + "/magnet", "w")
+                        torrent_src_file = open(save_path + "/magnet", "w")
                         torrent_src_file.write(magnet)
                         torrent_src_file.close()
                     else:
-                        # clean up
-                        shutil.rmtree(fake_file_base_folder)
+                        self.client.torrents_delete(delete_files=True, torrent_hashes=torrent.hash)
 
                     return is_streamable
 
