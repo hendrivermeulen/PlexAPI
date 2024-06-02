@@ -1,13 +1,14 @@
 import threading
 import time
 
-from src.api.plex import PlexAPI
-from src.api.qtorrent import QTorrentAPI
+from api.plex import PlexAPI
+from api.qtorrent import QTorrentAPI
+from utils.stoppable_thread import StoppableThread
 
 stop_semaphore = threading.Semaphore(0)
 
 
-class WatchingListener(threading.Thread):
+class WatchingListener(StoppableThread):
 
     def __init__(self):
         super().__init__()

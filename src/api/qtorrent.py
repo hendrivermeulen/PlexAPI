@@ -1,17 +1,15 @@
 import datetime
 import os
-import shutil
 import string
-import threading
 import time
 import traceback
-from threading import Thread
 
 import ffmpeg
 import qbittorrentapi
 
-from src.api.plex import PlexAPI
-from src.api.utils import contains_at_least_half
+from api.plex import PlexAPI
+from utils.stoppable_thread import StoppableThread
+from utils.utils import contains_at_least_half
 
 
 def extract_task(from_file, to_file, secs):
@@ -31,16 +29,16 @@ def extract_task(from_file, to_file, secs):
             pass
 
 
-class QTorrentAPI(Thread):
+class QTorrentAPI(StoppableThread):
     def __init__(self, plex_api: PlexAPI):
         super().__init__()
         self.plex_api = plex_api
         # instantiate a Client using the appropriate WebUI configuration
         conn_info = dict(
-            host="localhost",
-            port=8080,
-            username="admin",
-            password="adminadmin",
+            host=os.environ.get("QBITTORRENT_HOST"),
+            port=os.environ.get("QBITTORRENT_PORT"),
+            username=os.environ.get("QBITTORRENT_USERNAME"),
+            password=os.environ.get("QBITTORRENT_PASSWORD"),
         )
         self.client = qbittorrentapi.Client(**conn_info)
 

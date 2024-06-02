@@ -6,3 +6,5 @@ python-dotenv==1.0.0
 qbittorrent-api==2023.11.57
 ffmpeg-python==0.2.0
 websocket-client==1.7.0
+django==5.0.6
+coverage==7.5.3

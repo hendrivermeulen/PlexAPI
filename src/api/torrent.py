@@ -9,7 +9,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 import unittest
 
-from src.api.utils import contains_title, parse_for_url
+from utils.utils import contains_title, parse_for_url
 
 
 class TYPE(Enum):

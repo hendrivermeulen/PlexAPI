@@ -2,7 +2,6 @@ import re
 import string
 import unittest
 
-
 def remove_non_alpha(text: string):
     pattern = re.compile('[\W]+')
     return pattern.sub('', text)
