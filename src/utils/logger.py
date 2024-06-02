@@ -1,15 +1,24 @@
 import sys
-
+import traceback
 
 logged_exceptions: list = []
 
 
+def log_error(message: str):
+    print(message, file=sys.stderr)
+
+
 def log(message: str = None, exception: Exception = None):
     if message is not None:
-        print(message, file=sys.stderr)
+        if exception is None:
+            print(message)
+        else:
+            print(message, file=sys.stderr)
     else:
-        logged_exceptions.append(exception)
-        print(exception, file=sys.stderr)
+        if exception is not None:
+            logged_exceptions.append(exception)
+            print(exception, file=sys.stderr)
+            print(traceback.format_exc(), file=sys.stderr)
 
 
 class NoException(Exception):

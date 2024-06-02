@@ -11,7 +11,7 @@ stop_semaphore = threading.Semaphore(0)
 class WatchingListener(StoppableThread):
 
     def __init__(self):
-        super().__init__()
+        super().__init__(name="WatchingListener")
         self.plex_api = PlexAPI()
         self.qtorrent = QTorrentAPI(self.plex_api)
         self.alert_listener = self.plex_api.server.startAlertListener(self.listen)

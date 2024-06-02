@@ -1,11 +1,12 @@
 import threading
 from threading import Thread
 from utils.logger import log
+from utils.startable import Startable
 
 
-class StoppableThread:
+class StoppableThread(Startable):
 
-    def __init__(self, should_loop=False, loop_sleep_time_s=1, stop_timeout_s=10):
+    def __init__(self, name: str, should_loop=False, loop_sleep_time_s=1, stop_timeout_s=10):
         super().__init__()
         self.thread: threading.Thread | None = None
         self.sleep_lock = threading.Semaphore(0)
@@ -16,6 +17,8 @@ class StoppableThread:
         self.should_loop = should_loop
         self.loop_sleep_time_s = loop_sleep_time_s
 
+        self.name = name
+
     def sleep(self, time_s):
         if not self.do_sleep(time_s):
             raise StoppedException()
@@ -23,13 +26,10 @@ class StoppableThread:
     def do_sleep(self, time_s):
         return not self.sleep_lock.acquire(True, time_s) or self.running
 
-    def is_running(self):
-        return self.running
-
     def run(self):
         if self.should_loop:
             try:
-                while self.is_running():
+                while self.is_running:
                     self.apply_work()
                     self.sleep(self.loop_sleep_time_s)
             except StoppedException:
@@ -50,21 +50,22 @@ class StoppableThread:
     def work(self):
         raise NoWorkException()
 
-    def start(self):
+    def started(self):
         if self.running:
             raise AlreadyRunningException()
         else:
-            self.thread = Thread(target=self.run)
+            self.thread = Thread(target=self.run, name=self.name)
             self.running = True
             self.thread.start()
 
-    def stop(self):
+    def stopped(self):
         if self.running:
             self.running = False
             self.tock()
-            self.thread.join(self.stop_timeout_s)
-            if self.thread.is_alive():
-                raise StopTimeoutException()
+            if not threading.current_thread() == self.thread:
+                self.thread.join(self.stop_timeout_s)
+                if self.thread.is_alive():
+                    raise StopTimeoutException()
         else:
             raise NotRunningException
 

@@ -1,17 +1,34 @@
 from api.plex import PlexAPI
+from utils.logger import log_error
 from utils.stoppable_thread import StoppableThread
-from workers.main_worker import MainWorker
+
+
+class WatchlistListener:
+    def watchlist_item_added(self, item):
+        pass
+
+    def watchlist_item_removed(self, item):
+        pass
 
 
 class WatchlistScrapper(StoppableThread):
 
-    def __init__(self, last_watchlist: list, worker: MainWorker):
-        super().__init__(should_loop=True, stop_timeout_s=30)
-        self.plex_api = PlexAPI()
+    def __init__(self, last_watchlist: list, listener: WatchlistListener):
+        super().__init__(name="WatchlistScrapper", should_loop=True, stop_timeout_s=30)
+        self.plex_api = None
         self.watchlist = last_watchlist
-        self.worker = worker
+        self.plex_api = PlexAPI()
+        self.listener = listener
 
     def work(self):
+        try:
+            self.plex_api.on_start()
+        except Exception:
+            timeout = 4
+            log_error("Lost connection to Plex, trying again in " + str(timeout+1) + " seconds...")
+            self.sleep(timeout)
+            return
+
         updated_watchlist = self.plex_api.get_watchlist()
         old_watchlist = self.watchlist.copy()
 
@@ -21,9 +38,9 @@ class WatchlistScrapper(StoppableThread):
                 old_watchlist.remove(item)
             else:
                 self.watchlist.append(item)
-                self.worker.watchlist_item_added(item)
+                self.listener.watchlist_item_added(item)
 
         for item in old_watchlist:
             self.watchlist.remove(item)
-            self.worker.watchlist_item_removed(item)
+            self.listener.watchlist_item_removed(item)
 
