@@ -4,17 +4,23 @@ class Startable:
         self.is_running = False
 
     def start(self):
-        self.is_running = True
-        self.on_start()
-        self.started()
+        if self.is_running:
+            raise AlreadyRunningException()
+        else:
+            self.is_running = True
+            self.on_start()
+            self.started()
 
     def started(self):
         pass
 
     def stop(self):
-        self.is_running = False
-        self.on_stop()
-        self.stopped()
+        if self.is_running:
+            self.is_running = False
+            self.on_stop()
+            self.stopped()
+        else:
+            raise NotRunningException()
 
     def stopped(self):
         pass
@@ -24,3 +30,11 @@ class Startable:
 
     def on_stop(self):
         pass
+
+
+class NotRunningException(Exception):
+    pass
+
+
+class AlreadyRunningException(Exception):
+    pass

@@ -9,8 +9,7 @@ class MainWorker(StoppableThread, WatchlistListener):
         self.watchlist_scrapper = WatchlistScrapper([], self)
 
     def work(self):
-        if self.running:
-            pass
+        pass
 
     def on_start(self):
         self.watchlist_scrapper.start()

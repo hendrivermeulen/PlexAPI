@@ -13,7 +13,6 @@ class StoppableThread(Startable):
 
         self.stop_timeout_s = stop_timeout_s
 
-        self.running = False
         self.should_loop = should_loop
         self.loop_sleep_time_s = loop_sleep_time_s
 
@@ -24,7 +23,7 @@ class StoppableThread(Startable):
             raise StoppedException()
 
     def do_sleep(self, time_s):
-        return not self.sleep_lock.acquire(True, time_s) or self.running
+        return not self.sleep_lock.acquire(True, time_s) or self.is_running
 
     def run(self):
         if self.should_loop:
@@ -36,7 +35,6 @@ class StoppableThread(Startable):
                 pass
         else:
             self.apply_work()
-        self.running = False
 
     def apply_work(self):
         try:
@@ -51,23 +49,15 @@ class StoppableThread(Startable):
         raise NoWorkException()
 
     def started(self):
-        if self.running:
-            raise AlreadyRunningException()
-        else:
-            self.thread = Thread(target=self.run, name=self.name)
-            self.running = True
-            self.thread.start()
+        self.thread = Thread(target=self.run, name=self.name)
+        self.thread.start()
 
     def stopped(self):
-        if self.running:
-            self.running = False
-            self.tock()
-            if not threading.current_thread() == self.thread:
-                self.thread.join(self.stop_timeout_s)
-                if self.thread.is_alive():
-                    raise StopTimeoutException()
-        else:
-            raise NotRunningException
+        self.tock()
+        if not threading.current_thread() == self.thread:
+            self.thread.join(self.stop_timeout_s)
+            if self.thread.is_alive():
+                raise StopTimeoutException()
 
     def tock(self):
         self.sleep_lock.release()
@@ -78,14 +68,6 @@ class StopTimeoutException(Exception):
 
 
 class StoppedException(Exception):
-    pass
-
-
-class AlreadyRunningException(Exception):
-    pass
-
-
-class NotRunningException(Exception):
     pass
 
 
