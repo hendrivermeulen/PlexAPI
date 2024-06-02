@@ -1,5 +1,5 @@
 from api.plex import PlexAPI
-from utils.logger import log_error
+from utils.logger import log, log_error
 from utils.stoppable_thread import StoppableThread
 
 
@@ -19,11 +19,16 @@ class WatchlistScrapper(StoppableThread):
         self.watchlist = last_watchlist
         self.plex_api = PlexAPI()
         self.listener = listener
+        self.connected = False
 
     def work(self):
         try:
             self.plex_api.on_start()
+            if not self.connected:
+                self.connected = True
+                log("Connected to Plex")
         except Exception:
+            self.connected = False
             timeout = 4
             log_error("Lost connection to Plex, trying again in " + str(timeout+1) + " seconds...")
             self.sleep(timeout)
