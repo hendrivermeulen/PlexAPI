@@ -1,24 +1,25 @@
 # Plex API
 import os
+import threading
 
-from workers.watching_listener import WatchingListener
-from workers.watchlist_scrapper import WatchlistScrapper
+from workers.main_worker import MainWorker
 from utils.folders import load_folders
+
+worker = MainWorker()
+
+started = False
+start_lock = threading.Lock
 
 
 def main():
-    load_folders()
-
-    watchlist_scrapper = WatchlistScrapper()
-    watching_listener = WatchingListener()
-
-    watchlist_scrapper.start()
-    watching_listener.start()
-
-    start_django()
-
-    watchlist_scrapper.stop()
-    watching_listener.stop()
+    try:
+        load_folders()
+        worker.start()
+        input("Press any enter to stop program...")
+        worker.stop()
+    except KeyboardInterrupt:
+        pass
+    worker.stop()
 
 
 def start_django():

@@ -28,7 +28,6 @@ def extract_task(from_file, to_file, secs):
             time.sleep(secs / 2)
             pass
 
-
 class QTorrentAPI(StoppableThread):
     def __init__(self, plex_api: PlexAPI):
         super().__init__()

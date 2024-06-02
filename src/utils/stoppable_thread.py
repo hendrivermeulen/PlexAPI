@@ -7,9 +7,8 @@ class StoppableThread:
 
     def __init__(self, should_loop=False, loop_sleep_time_s=1, stop_timeout_s=10):
         super().__init__()
-        self.thread = None
+        self.thread: threading.Thread | None = None
         self.sleep_lock = threading.Semaphore(0)
-        self.stopped_lock = threading.Semaphore(0)
 
         self.stop_timeout_s = stop_timeout_s
 
@@ -37,7 +36,6 @@ class StoppableThread:
                 pass
         else:
             self.apply_work()
-        self.stopped_lock.release()
         self.running = False
 
     def apply_work(self):
@@ -64,9 +62,9 @@ class StoppableThread:
         if self.running:
             self.running = False
             self.tock()
-            if not self.stopped_lock.acquire(True, self.stop_timeout_s):
+            self.thread.join(self.stop_timeout_s)
+            if self.thread.is_alive():
                 raise StopTimeoutException()
-            self.thread.join()
         else:
             raise NotRunningException
 
