@@ -2,7 +2,7 @@
 import os
 
 from workers.watching_listener import WatchingListener
-from workers.watchlist_listener import WatchlistScrapper
+from workers.watchlist_scrapper import WatchlistScrapper
 from utils.folders import load_folders
 
 

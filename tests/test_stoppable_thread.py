@@ -1,7 +1,9 @@
 import threading
 from unittest import TestCase
 
-from utils.stoppable_thread import StoppableThread, StoppedException, StopTimeoutException
+from utils.logger import logged_exceptions
+from utils.stoppable_thread import StoppableThread, StoppedException, StopTimeoutException, NotRunningException, \
+    AlreadyRunningException, NoWorkException
 
 TIMEOUT = 10
 
@@ -13,7 +15,7 @@ stop = threading.Semaphore(0)
 class TestThread(StoppableThread):
 
     def work(self):
-        while self.running:
+        while self.is_running():
             work_done.release(1)
             try:
                 self.sleep(10)
@@ -43,7 +45,7 @@ class TestUnstoppableThread(StoppableThread):
 class TestExceptionLoopThread(StoppableThread):
 
     def __init__(self):
-        super().__init__(should_loop=True, enable_tick_tock=True)
+        super().__init__(should_loop=True)
 
     def work(self):
         work_done.release(1)
@@ -52,69 +54,65 @@ class TestExceptionLoopThread(StoppableThread):
 
 class LoopTestThread(StoppableThread):
 
-    def __init__(self, enable_tick_tock=False):
-        super().__init__(should_loop=True, enable_tick_tock=enable_tick_tock)
+    def __init__(self):
+        super().__init__(should_loop=True)
 
     def work(self):
         work_done.release(1)
 
 
 class Test(TestCase):
+    def setUp(self):
+        self.test_thread = None
+
+    def tearDown(self):
+        if self.test_thread is not None and self.test_thread.running:
+            self.test_thread.stop()
 
     def test_stoppable_thread(self):
-        try:
-            test_thread = TestThread()
-            test_thread.start()
-            self.assertTrue(work_done.acquire(True, TIMEOUT))
-            test_thread.stop()
-            self.assertTrue(stopped.acquire(True, TIMEOUT))
-        except Exception as e:
-            self.fail(e)
+        self.test_thread = TestThread()
+        self.test_thread.start()
+        self.assertTrue(work_done.acquire(True, TIMEOUT))
+        self.test_thread.stop()
+        self.assertTrue(stopped.acquire(True, TIMEOUT))
 
     def test_unstoppable_thread(self):
-        try:
-            test_thread = TestUnstoppableThread()
-            test_thread.start()
-            self.assertRaises(StopTimeoutException, test_thread.stop)
-            stop.release()
-        except Exception as e:
-            self.fail(e)
+        self.test_thread = TestUnstoppableThread()
+        self.test_thread.start()
+        self.assertRaises(StopTimeoutException, self.test_thread.stop)
+        stop.release()
 
     def test_loop_stoppable_thread(self):
-        try:
-            test_thread = LoopTestThread()
-            test_thread.start()
-            self.assertTrue(work_done.acquire(True, TIMEOUT))
-            test_thread.stop()
-        except Exception as e:
-            self.fail(e)
+        self.test_thread = LoopTestThread()
+        self.test_thread.start()
+        self.assertTrue(work_done.acquire(True, TIMEOUT))
+        self.test_thread.stop()
 
     def test_loop_tick_tock_stoppable_thread(self):
-        try:
-            test_thread = LoopTestThread(True)
-            test_thread.start()
-            self.assertTrue(work_done.acquire(True, TIMEOUT))
-            test_thread.tock()
-            self.assertTrue(work_done.acquire(True, TIMEOUT))
-            test_thread.stop()
-        except Exception as e:
-            self.fail(e)
+        self.test_thread = LoopTestThread()
+        self.test_thread.start()
+        self.assertTrue(work_done.acquire(True, TIMEOUT))
+        self.test_thread.tock()
+        self.assertTrue(work_done.acquire(True, TIMEOUT))
+        self.test_thread.stop()
 
     def test_loop_tick_tock_exception_stoppable_thread(self):
-        try:
-            test_thread = TestExceptionLoopThread()
-            test_thread.start()
-            self.assertTrue(work_done.acquire(True, TIMEOUT))
-            test_thread.tock()
-            self.assertTrue(work_done.acquire(True, TIMEOUT))
-            test_thread.stop()
-        except Exception as e:
-            self.fail(e)
+        self.test_thread = TestExceptionLoopThread()
+        self.test_thread.start()
+        self.assertTrue(work_done.acquire(True, TIMEOUT))
+        self.test_thread.tock()
+        self.assertTrue(work_done.acquire(True, TIMEOUT))
+        self.test_thread.stop()
 
     def test_loop_sleep_thread(self):
-        try:
-            test_thread = TestLoopSleepThread()
-            test_thread.start()
-            test_thread.stop()
-        except Exception as e:
-            self.fail(e)
+        self.test_thread = TestLoopSleepThread()
+        self.assertRaises(NotRunningException, self.test_thread.stop)
+        self.test_thread.start()
+        self.assertRaises(AlreadyRunningException, self.test_thread.start)
+        self.test_thread.stop()
+
+    def test_empty(self):
+        self.test_thread = StoppableThread()
+        self.test_thread.start()
+        self.test_thread.stop()
+        self.assertTrue(isinstance(logged_exceptions.pop(), NoWorkException))

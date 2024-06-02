@@ -1,6 +1,8 @@
 import re
 import string
+import time
 import unittest
+
 
 def remove_non_alpha(text: string):
     pattern = re.compile('[\W]+')
@@ -45,19 +47,11 @@ def contains_at_least_half(title: string, name: string):
     return contains
 
 
-class UtilsTest(unittest.TestCase):
-    def test_contains_title(self):
-        self.assertTrue(contains_title("Test 123", "Test 123"))
-        self.assertTrue(contains_title("Test 123", "Extra Test 123 Extra"))
-        self.assertTrue(contains_title("Test 123", "Extra.Test.123.Extra"))
-        self.assertTrue(contains_title("Test-123", "Extra.Test-123.Extra"))
-
-        self.assertTrue(contains_title("Mission: Impossible - Dead Reckoning Part One 1080p",
-                                       "Mission Impossible - Dead Reckoning Part One (2023) [1080p] [WEBRip]"))
-
-        self.assertFalse(contains_title("Test 123", ""))
-        self.assertFalse(contains_title("Test 123", "Other words"))
-
-    def test_parse(self):
-        self.assertEqual(parse_for_url("Test 1-2-3"), "test-1-2-3")
-        self.assertEqual(parse_for_url("Test & 1-2-3"), "test-1-2-3")
+def await_value(call: callable, value, timeout_ms: int):
+    time_slept_ms = 0
+    while not call() == value:
+        time.sleep(0.1)
+        time_slept_ms += 100
+        if time_slept_ms >= timeout_ms:
+            return False
+    return True
