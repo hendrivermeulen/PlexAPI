@@ -3,10 +3,8 @@ import os
 from plexapi.server import PlexServer
 from dotenv import load_dotenv
 
-from utils.startable import Startable
 
-
-class PlexAPI(Startable):
+class PlexAPI():
     def __init__(self):
         super().__init__()
 
@@ -17,9 +15,6 @@ class PlexAPI(Startable):
         self.plex_token = os.environ.get("PLEX_TOKEN")
         self.library_path = os.environ.get("PLEX_LIBRARY_PATH")  # TODO replace with folders
 
-        self.server = None
-
-    def on_start(self):
         self.server = PlexServer(self.plex_url, self.plex_token)
 
     def get_watchlist(self) -> list:

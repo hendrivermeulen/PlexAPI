@@ -15,23 +15,30 @@ class WatchlistScrapper(StoppableThread):
 
     def __init__(self, last_watchlist: list, listener: WatchlistListener):
         super().__init__(name="WatchlistScrapper", should_loop=True, stop_timeout_s=30)
-        self.plex_api = None
+        self.plex_api: PlexAPI | None = None
         self.watchlist = last_watchlist
-        self.plex_api = PlexAPI()
         self.listener = listener
-        self.connected = False
+        self.is_connected = False
+
+    def confirm_connection(self, call: callable):
+        try:
+            call()
+            if not self.is_connected:
+                self.is_connected = True
+                log("Connected to Plex")
+            return True
+        except Exception:
+            self.is_connected = False
+            timeout = 4
+            log_error("Lost connection to Plex, trying again in " + str(timeout + 1) + " seconds...")
+            self.sleep(timeout)
+            return False
+
+    def create_api(self):
+        self.plex_api = PlexAPI()
 
     def work(self):
-        try:
-            self.plex_api.on_start()
-            if not self.connected:
-                self.connected = True
-                log("Connected to Plex")
-        except Exception:
-            self.connected = False
-            timeout = 4
-            log_error("Lost connection to Plex, trying again in " + str(timeout+1) + " seconds...")
-            self.sleep(timeout)
+        if not self.confirm_connection(self.create_api):
             return
 
         updated_watchlist = self.plex_api.get_watchlist()
@@ -48,4 +55,3 @@ class WatchlistScrapper(StoppableThread):
         for item in old_watchlist:
             self.watchlist.remove(item)
             self.listener.watchlist_item_removed(item)
-
