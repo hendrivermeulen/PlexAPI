@@ -2,7 +2,7 @@ import coverage
 import unittest
 
 if __name__ == '__main__':
-    cov = coverage.Coverage()
+    cov = coverage.Coverage(source=["..\\src"])
     cov.start()
 
     try:
