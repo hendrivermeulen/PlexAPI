@@ -2,8 +2,8 @@ import threading
 from unittest import TestCase
 
 from utils.logger import logged_exceptions
-from utils.stoppable_thread import StoppableThread, StoppedException, StopTimeoutException, NotRunningException, \
-    AlreadyRunningException, NoWorkException
+from utils.startable import AlreadyRunningException, NotRunningException
+from utils.stoppable_thread import StoppableThread, StoppedException, StopTimeoutException, NoWorkException
 
 TIMEOUT = 10
 
@@ -15,7 +15,7 @@ stop = threading.Semaphore(0)
 class TestThread(StoppableThread):
 
     def work(self):
-        while self.is_running():
+        while self.is_running:
             work_done.release(1)
             try:
                 self.sleep(10)
@@ -26,7 +26,7 @@ class TestThread(StoppableThread):
 class TestLoopSleepThread(StoppableThread):
 
     def __init__(self):
-        super().__init__(should_loop=True)
+        super().__init__(should_loop=True, name="Test")
 
     def work(self):
         self.sleep(10)
@@ -35,7 +35,7 @@ class TestLoopSleepThread(StoppableThread):
 class TestUnstoppableThread(StoppableThread):
 
     def __init__(self):
-        super().__init__(stop_timeout_s=1)
+        super().__init__(stop_timeout_s=1, name="Test")
 
     def work(self):
         stop.acquire()
@@ -45,7 +45,7 @@ class TestUnstoppableThread(StoppableThread):
 class TestExceptionLoopThread(StoppableThread):
 
     def __init__(self):
-        super().__init__(should_loop=True)
+        super().__init__(should_loop=True, name="Test")
 
     def work(self):
         work_done.release(1)
@@ -55,7 +55,7 @@ class TestExceptionLoopThread(StoppableThread):
 class LoopTestThread(StoppableThread):
 
     def __init__(self):
-        super().__init__(should_loop=True)
+        super().__init__(should_loop=True, name="Test")
 
     def work(self):
         work_done.release(1)
@@ -66,11 +66,11 @@ class Test(TestCase):
         self.test_thread = None
 
     def tearDown(self):
-        if self.test_thread is not None and self.test_thread.running:
+        if self.test_thread is not None and self.test_thread.is_running:
             self.test_thread.stop()
 
     def test_stoppable_thread(self):
-        self.test_thread = TestThread()
+        self.test_thread = TestThread("Test")
         self.test_thread.start()
         self.assertTrue(work_done.acquire(True, TIMEOUT))
         self.test_thread.stop()
@@ -112,7 +112,7 @@ class Test(TestCase):
         self.test_thread.stop()
 
     def test_empty(self):
-        self.test_thread = StoppableThread()
+        self.test_thread = StoppableThread("Test")
         self.test_thread.start()
         self.test_thread.stop()
         self.assertTrue(isinstance(logged_exceptions.pop(), NoWorkException))

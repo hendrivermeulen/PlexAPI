@@ -1,18 +1,12 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
+from test_api import Item, TestAPI
 from utils.utils import await_value
 from workers.main_worker import MainWorker
 from workers.watchlist_scrapper import WatchlistScrapper
 
 TIMEOUT_MS = 3000
-
-
-class Item:
-
-    def __init__(self, title, year):
-        self.title = title
-        self.year = year
 
 
 class TestWatchlistScrapper(TestCase):
@@ -27,11 +21,12 @@ class TestWatchlistScrapper(TestCase):
         self.worker.watchlist_item_removed = self.removed_mock
 
         self.scrapper = WatchlistScrapper([], self.worker)
+        self.scrapper.plex_api.get_plex_connection = MagicMock(return_value=TestAPI())
         self.scrapper.plex_api.get_watchlist = MagicMock(return_value=[
             Item("Spider-man", 2003),
             Item("Spider-man", 2005),
             Item("Spider-man", 2007)
-        ])
+        ]) # TODO use TestAPI
 
         self.scrapper.start()
 

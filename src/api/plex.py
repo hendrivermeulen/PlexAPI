@@ -22,10 +22,13 @@ class PlexAPI:
         self.confirm_connection(lambda: None)
         self.server = None
 
+    def get_plex_connection(self):
+        return PlexServer(self.plex_url, self.plex_token)
+
     def confirm_connection(self, call: callable):
         global is_connected
         try:
-            self.server = PlexServer(self.plex_url, self.plex_token)
+            self.server = self.get_plex_connection()
             if not is_connected:
                 is_connected = True
                 log("Connected to Plex")

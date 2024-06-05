@@ -1,4 +1,5 @@
 from api.plex import PlexAPI
+from utils.logger import log
 from utils.stoppable_thread import StoppableThread
 
 
@@ -32,8 +33,10 @@ class WatchlistScrapper(StoppableThread):
                     old_watchlist.remove(item)
                 else:
                     self.watchlist.append(item)
+                    log("Added " + item + " to watchlist")
                     self.listener.watchlist_item_added(item)
 
             for item in old_watchlist:
                 self.watchlist.remove(item)
+                log("Removed " + item + " from watchlist")
                 self.listener.watchlist_item_removed(item)
