@@ -3,8 +3,12 @@ import os
 from plexapi.server import PlexServer
 from dotenv import load_dotenv
 
+from utils.logger import log, log_error
 
-class PlexAPI():
+is_connected = False
+
+
+class PlexAPI:
     def __init__(self):
         super().__init__()
 
@@ -15,16 +19,30 @@ class PlexAPI():
         self.plex_token = os.environ.get("PLEX_TOKEN")
         self.library_path = os.environ.get("PLEX_LIBRARY_PATH")  # TODO replace with folders
 
-        self.server = PlexServer(self.plex_url, self.plex_token)
+        self.confirm_connection(lambda: None)
+        self.server = None
+
+    def confirm_connection(self, call: callable):
+        global is_connected
+        try:
+            self.server = PlexServer(self.plex_url, self.plex_token)
+            if not is_connected:
+                is_connected = True
+                log("Connected to Plex")
+            return call()
+        except Exception:
+            is_connected = False
+            log_error("Lost connection to Plex")
+            return None
 
     def get_watchlist(self) -> list:
-        return self.server.myPlexAccount().watchlist()
+        return self.confirm_connection(lambda: self.server.myPlexAccount().watchlist())
 
     def get_movies(self):
-        return self.server.library.section('Movies')
+        return self.confirm_connection(lambda: self.server.library.section('Movies'))
 
     def get_series(self):
-        return self.server.library.section('TV Shows')
+        return self.confirm_connection(lambda: self.server.library.section('TV Shows'))
 
     def get_name(self, item):
         return item.title + " " + str(item.year)
