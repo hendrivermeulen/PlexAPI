@@ -22,26 +22,18 @@ class TestWatchingNotifier(TestCase, WatchingListener):
         self.notifier.stop()
 
     def started_playing(self, item):
+        super().started_playing(item)
         self.playing = item
         self.started_playing_lock.release()
 
     def stopped_playing(self, item):
+        super().stopped_playing(item)
         self.stopped = item
         self.stopped_playing_lock.release()
 
     def test_listener(self):
-        self.notifier.listen({
-            "type": "playing",
-            "PlaySessionStateNotification": [{"state": "playing"}]
-        })
-
         self.assertTrue(self.started_playing_lock.acquire(True, 5))
         self.assertEqual("Spider-man 2003", self.playing)
-
-        self.notifier.listen({
-            "type": "playing",
-            "PlaySessionStateNotification": [{"state": "stopped"}]
-        })
 
         self.assertTrue(self.stopped_playing_lock.acquire(True, 5))
         self.assertEqual("Spider-man 2003", self.stopped)

@@ -62,6 +62,9 @@ class StoppableThread(Startable):
     def tock(self):
         self.sleep_lock.release()
 
+    def join(self):
+        self.thread.join()
+
 
 class StopTimeoutException(Exception):
     pass

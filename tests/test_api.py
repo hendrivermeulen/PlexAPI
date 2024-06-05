@@ -1,3 +1,6 @@
+from utils.stoppable_thread import StoppableThread
+
+
 class Item:
 
     def __init__(self, title, year):
@@ -14,9 +17,32 @@ class MyPlexAccount:
         ]
 
 
+class AlertListener(StoppableThread):
+
+    def __init__(self, listen: callable):
+        super().__init__("TestAPIAlertListener")
+        self.listen = listen
+
+    def work(self):
+        self.listen({
+            "type": "playing",
+            "PlaySessionStateNotification": [{"state": "playing"}]
+        })
+
+        self.listen({
+            "type": "playing",
+            "PlaySessionStateNotification": [{"state": "stopped"}]
+        })
+
+
 class TestAPI:
     def sessions(self):
         return [[Item("Spider-man", 2003)]]
 
     def myPlexAccount(self):
-        return  MyPlexAccount()
+        return MyPlexAccount()
+
+    def startAlertListener(self, listen: callable):
+        listener = AlertListener(listen)
+        listener.start()
+        return listener

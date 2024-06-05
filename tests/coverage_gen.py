@@ -2,12 +2,12 @@ import coverage
 import unittest
 
 if __name__ == '__main__':
-    cov = coverage.Coverage(source=["..\\src"])
+    cov = coverage.Coverage(source=["..\\src"], omit=["*__init__.py"])
     cov.start()
 
     try:
         testsuite = unittest.TestLoader().discover('.')
-        unittest.TextTestRunner(verbosity=1).run(testsuite)
+        unittest.TextTestRunner(verbosity=0).run(testsuite)
     except:  # catch-all except clause
         pass
 
