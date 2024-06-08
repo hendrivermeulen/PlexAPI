@@ -16,7 +16,11 @@ class TestTorrentAPI(TestCase):
     def tearDown(self):
         self.torrent_api.stop()
 
-    def test_movie_search(self):
+    def test(self):
+        self.movies_test()
+        self.no_movie_test()
+
+    def movies_test(self):
         torrent_list = self.torrent_api.movie_search(MOVIE + " " + YEAR)
         self.assertGreater(len(torrent_list), 0)
 
@@ -26,8 +30,5 @@ class TestTorrentAPI(TestCase):
         self.assertIn("YTS Found " + MOVIE + " 720p", logged_messages)
         self.assertGreaterEqual(len(torrent_list), 4)
 
-    def test_no_movie_found(self):
+    def no_movie_test(self):
         self.assertEqual(0, len(self.torrent_api.movie_search("This movie does not exist")))
-
-    def test_series_search(self):
-        pass

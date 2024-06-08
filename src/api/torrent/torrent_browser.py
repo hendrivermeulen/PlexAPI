@@ -4,6 +4,7 @@ import uuid
 from enum import Enum
 
 from selenium import webdriver
+from selenium.common.exceptions import InvalidSessionIdException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -40,7 +41,7 @@ class TorrentBrowser(StoppableThread):
 
     def work(self):
         self.requests_lock.acquire()
-        if self.is_running:
+        if self.is_running():
             request = self.requests.pop()
             if request.request_type is TYPE.MOVIE:
                 request.response = self.movie_search(request.title)
@@ -54,7 +55,11 @@ class TorrentBrowser(StoppableThread):
     def on_stop(self):
         self.requests_lock.release()
         self.responses_queue.release()
-        self.clean_up()
+
+        try:
+            self.driver.close()
+        except InvalidSessionIdException:
+            pass
 
     def add_concurrent_request(self, title: string, request_type: TYPE):
         request = Request(title, request_type)
@@ -79,7 +84,4 @@ class TorrentBrowser(StoppableThread):
         raise NotImplementedError()
 
     def clean_up(self):
-        try:
-            self.driver.close()
-        except:
-            pass
+        self.driver.get("about:blank")

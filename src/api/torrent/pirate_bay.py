@@ -1,6 +1,7 @@
 import string
 from enum import Enum
 
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from api.torrent.torrent_browser import TorrentBrowser
@@ -121,7 +122,8 @@ class PirateBayTorrentBrowser(TorrentBrowser):
                     return link.get_attribute("href")
                 else:
                     continue
-        except:
+        except NoSuchElementException\
+                :
             pass
 
         return None

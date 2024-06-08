@@ -2,7 +2,7 @@ import threading
 
 from api.plex import PlexAPI
 from utils.logger import log
-from utils.stoppable_thread import StoppableThread, StoppedException
+from utils.stoppable_thread import StoppableThread
 
 stop_semaphore = threading.Semaphore(0)
 
@@ -18,7 +18,7 @@ class WatchingListener:
 class WatchingNotifier(StoppableThread):
 
     def __init__(self, watching_listener: WatchingListener):
-        super().__init__("WatchingNotifier")
+        super().__init__("WatchingNotifier", should_loop=True)
         self.plex_api = PlexAPI()
         self.alert_listener = None
         self.watching_listener = watching_listener
@@ -49,16 +49,11 @@ class WatchingNotifier(StoppableThread):
                 self.process_stopped()
 
     def run(self):
-        while self.is_running:
-            self.alert_listener = self.plex_api.confirm_connection(
-                lambda: self.plex_api.server.startAlertListener(self.listen))
-            if self.alert_listener is None:
-                try:
-                    self.sleep(5)
-                except StoppedException:
-                    break
-                continue
-            self.alert_listener.join()
+        self.alert_listener = self.plex_api.confirm_connection(
+            lambda: self.plex_api.server.startAlertListener(self.listen))
+        if self.alert_listener is None:
+            self.sleep(5)
+        self.alert_listener.join()
 
     def on_stop(self):
         if self.alert_listener is not None:

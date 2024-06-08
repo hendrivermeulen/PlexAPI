@@ -1,5 +1,6 @@
 import string
 
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from api.torrent.torrent_browser import TorrentBrowser
@@ -42,5 +43,5 @@ class YTSTorrentBrowser(TorrentBrowser):
             sources += extract("1080p", links)
             sources += extract("720p", links)
             return sources
-        except:
+        except NoSuchElementException:
             return []

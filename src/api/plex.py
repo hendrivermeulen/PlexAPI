@@ -13,7 +13,7 @@ class PlexAPI:
         super().__init__()
 
         if not load_dotenv():
-            raise Exception("Could not load environmental variables from .env file")
+            raise RuntimeError("Could not load environmental variables from .env file")
 
         self.plex_url = os.environ.get("PLEX_URL")
         self.plex_token = os.environ.get("PLEX_TOKEN")

@@ -15,7 +15,7 @@ stop = threading.Semaphore(0)
 class TestThread(StoppableThread):
 
     def work(self):
-        while self.is_running:
+        while self.is_running():
             work_done.release(1)
             try:
                 self.sleep(10)
@@ -66,7 +66,7 @@ class Test(TestCase):
         self.test_thread = None
 
     def tearDown(self):
-        if self.test_thread is not None and self.test_thread.is_running:
+        if self.test_thread is not None and self.test_thread.is_running():
             self.test_thread.stop()
 
     def test_stoppable_thread(self):
@@ -115,4 +115,4 @@ class Test(TestCase):
         self.test_thread = StoppableThread("Test")
         self.test_thread.start()
         self.test_thread.stop()
-        self.assertTrue(isinstance(logged_exceptions.pop(), NoWorkException))
+        self.assertIsInstance(logged_exceptions.pop(), NoWorkException)
