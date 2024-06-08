@@ -8,18 +8,18 @@ stop_semaphore = threading.Semaphore(0)
 
 
 class WatchingListener:
-    def started_playing(self, item):
+    def started_playing(self, title):
         raise NotImplementedError()
 
-    def stopped_playing(self, item):
+    def stopped_playing(self, title):
         raise NotImplementedError()
 
 
 class WatchingNotifier(StoppableThread):
 
-    def __init__(self, watching_listener: WatchingListener):
+    def __init__(self, watching_listener: WatchingListener, plex_api: PlexAPI):
         super().__init__("WatchingNotifier", should_loop=True)
-        self.plex_api = PlexAPI()
+        self.plex_api = plex_api
         self.alert_listener = None
         self.watching_listener = watching_listener
         self.currently_playing = None

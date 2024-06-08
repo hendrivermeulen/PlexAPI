@@ -122,8 +122,7 @@ class PirateBayTorrentBrowser(TorrentBrowser):
                     return link.get_attribute("href")
                 else:
                     continue
-        except NoSuchElementException\
-                :
+        except NoSuchElementException:
             pass
 
         return None

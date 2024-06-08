@@ -56,11 +56,6 @@ class TorrentBrowser(StoppableThread):
         self.requests_lock.release()
         self.responses_queue.release()
 
-        try:
-            self.driver.close()
-        except InvalidSessionIdException:
-            pass
-
     def add_concurrent_request(self, title: string, request_type: TYPE):
         request = Request(title, request_type)
         self.requests.append(request)
