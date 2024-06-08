@@ -30,7 +30,8 @@ class StoppableThread(Startable):
             try:
                 while self.is_running:
                     self.apply_work()
-                    self.sleep(self.loop_sleep_time_s)
+                    if self.loop_sleep_time_s > 0:
+                        self.sleep(self.loop_sleep_time_s)
             except StoppedException:
                 pass
         else:
@@ -48,16 +49,22 @@ class StoppableThread(Startable):
     def work(self):
         raise NoWorkException()
 
-    def started(self):
+    def on_start(self):
         self.thread = Thread(target=self.run, name=self.name)
         self.thread.start()
 
-    def stopped(self):
+    def on_stop(self):
         self.tock()
         if not threading.current_thread() == self.thread:
             self.thread.join(self.stop_timeout_s)
             if self.thread.is_alive():
                 raise StopTimeoutException()
+
+    def started(self):
+        pass
+
+    def stopped(self):
+        pass
 
     def tock(self):
         self.sleep_lock.release()

@@ -100,34 +100,37 @@ class PirateBayTorrentBrowser(TorrentBrowser):
 
     def pirate_query(self, title: string, cat: string, quality: string, min_seed: int, max_size: float,
                      min_size: float):
-        title += " " + quality
-        query = "https://thepiratebay.party/search/" + title + "/1/99/" + cat
-        query = query.replace(" ", "%20")
-        # Navigate to a website
-        log("Pirate search: " + query)
-        self.driver.get(query)
-        # Print the page title
-        results = self.driver.find_element(by=By.ID, value="searchResult").find_elements(by=By.TAG_NAME, value="tr")
+        try:
+            title += " " + quality
+            query = "https://thepiratebay.party/search/" + title + "/1/99/" + cat
+            query = query.replace(" ", "%20")
+            # Navigate to a website
+            log("Pirate search: " + query)
+            self.driver.get(query)
+            # Print the page title
+            results = self.driver.find_element(by=By.ID, value="searchResult").find_elements(by=By.TAG_NAME, value="tr")
 
-        for result in results[1:]:  # skip first as that is header
-            info = result.find_elements(by=By.TAG_NAME, value="td")
-            link = info[1].find_element(by=By.TAG_NAME, value="a")
-            name = link.get_attribute("innerHTML").lower()
-            seeds = int(info[5].text)
-            size = get_size(info[4].text)
+            for result in results[1:]:  # skip first as that is header
+                info = result.find_elements(by=By.TAG_NAME, value="td")
+                link = info[1].find_element(by=By.TAG_NAME, value="a")
+                name = link.get_attribute("innerHTML").lower()
+                seeds = int(info[5].text)
+                size = get_size(info[4].text)
 
-            if "cam" in name or "hdts" in name or "hd ts" in name:
-                continue
+                if "cam" in name or "hdts" in name or "hd ts" in name:
+                    continue
 
-            if seeds < min_seed:
-                return None
+                if seeds < min_seed:
+                    return None
 
-            if max_size < size < min_size:
-                continue
+                if max_size < size < min_size:
+                    continue
 
-            if contains_title(title, name):
-                return link.get_attribute("href")
-            else:
-                continue
+                if contains_title(title, name):
+                    return link.get_attribute("href")
+                else:
+                    continue
+        except:
+            pass
 
         return None

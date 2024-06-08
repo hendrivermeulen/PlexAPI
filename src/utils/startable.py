@@ -9,21 +9,13 @@ class Startable:
         else:
             self.is_running = True
             self.on_start()
-            self.started()
-
-    def started(self):
-        pass
 
     def stop(self):
         if self.is_running:
             self.is_running = False
             self.on_stop()
-            self.stopped()
         else:
             raise NotRunningException()
-
-    def stopped(self):
-        pass
 
     def on_start(self):
         pass
