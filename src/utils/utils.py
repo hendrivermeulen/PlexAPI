@@ -4,17 +4,17 @@ import time
 
 
 def remove_non_alpha(text: string):
-    pattern = re.compile('[\W]+')
+    pattern = re.compile(r'\W+')
     return pattern.sub('', text)
 
 
 def parse_for_url(text: string):
-    pattern = re.compile('[^\w\s-]+')
+    pattern = re.compile(r'[^\w\s-]+')
     result = pattern.sub('', text).lower()
-    pattern = re.compile('[\s]+')
+    pattern = re.compile(r'\s+')
     result = pattern.sub('-', result)
-    pattern = re.compile('-+')
-    result = pattern.sub('-', result)
+    pattern = re.compile(r'-+')
+    result = pattern.sub(r'-', result)
     return result
 
 
