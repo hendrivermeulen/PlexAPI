@@ -15,4 +15,4 @@ if __name__ == '__main__':
     cov.save()
 
     cov.html_report()
-    print("Done.")
+    print("Open report: file:///C:/Users/Hen3/PycharmProjects/PlexAPI/tests/htmlcov/index.html")

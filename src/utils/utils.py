@@ -1,7 +1,6 @@
 import re
 import string
 import time
-import unittest
 
 
 def remove_non_alpha(text: string):

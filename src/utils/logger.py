@@ -2,6 +2,7 @@ import sys
 import traceback
 
 logged_exceptions: list = []
+logged_messages: list = []
 
 
 def log_error(message: str):
@@ -12,6 +13,7 @@ def log(message: str = None, exception: Exception = None):
     if message is not None:
         if exception is None:
             print(message)
+            logged_messages.append(message)
         else:
             print(message, file=sys.stderr)
     else:
