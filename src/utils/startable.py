@@ -18,9 +18,11 @@ class Startable:
             raise NotRunningException()
 
     def on_start(self):
+        # optional
         pass
 
     def on_stop(self):
+        # optional
         pass
 
 

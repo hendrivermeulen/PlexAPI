@@ -73,17 +73,13 @@ class TorrentBrowser(StoppableThread):
         return result
 
     def movie_search(self, title: string):
-        raise UnsupportedException()
+        raise NotImplementedError()
 
     def series_search(self, title: string):
-        raise UnsupportedException()
+        raise NotImplementedError()
 
     def clean_up(self):
         try:
             self.driver.close()
         except:
             pass
-
-
-class UnsupportedException(Exception):
-    pass

@@ -5,10 +5,10 @@ from utils.stoppable_thread import StoppableThread
 
 class WatchlistListener:
     def watchlist_item_added(self, item):
-        pass
+        raise NotImplementedError()
 
     def watchlist_item_removed(self, item):
-        pass
+        raise NotImplementedError()
 
 
 class WatchlistScrapper(StoppableThread):

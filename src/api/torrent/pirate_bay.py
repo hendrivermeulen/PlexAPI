@@ -24,6 +24,11 @@ def get_size(size_string):
     return 0.0
 
 
+def process(sources, results):
+    if results:
+        sources.append(results)
+
+
 class PirateBayTorrentBrowser(TorrentBrowser):
 
     def movie_search(self, title: string):
@@ -55,26 +60,11 @@ class PirateBayTorrentBrowser(TorrentBrowser):
 
         cat = TYPE.MOVIE.value
         # large
-        atmos4k = self.pirate_query(title, cat, ATMOS_HDR, 20, 30, 15)
-        if atmos4k:
-            log("Pirate Bay Found " + title + " " + ATMOS_HDR)
-            sources.append(atmos4k)
-
-        hdr4k = self.pirate_query(title, cat, HDR, 20, 30, 15)
-        if hdr4k:
-            log("Pirate Bay Found " + title + " " + HDR)
-            sources.append(hdr4k)
-
+        process(sources, self.pirate_query(title, cat, ATMOS_HDR, 20, 30, 15))
+        process(sources, self.pirate_query(title, cat, HDR, 20, 30, 15))
         # small
-        atmos4k = self.pirate_query(title, cat, ATMOS_HDR, 20, 30, 8)
-        if atmos4k:
-            log("Pirate Bay Found " + title + " " + ATMOS_HDR)
-            sources.append(atmos4k)
-
-        hdr4k = self.pirate_query(title, cat, HDR, 20, 30, 8)
-        if hdr4k:
-            log("Pirate Bay Found " + title + " " + HDR)
-            sources.append(hdr4k)
+        process(sources, self.pirate_query(title, cat, ATMOS_HDR, 20, 30, 8))
+        process(sources, self.pirate_query(title, cat, HDR, 20, 30, 8))
 
         return sources
 
@@ -127,6 +117,7 @@ class PirateBayTorrentBrowser(TorrentBrowser):
                     continue
 
                 if contains_title(title, name):
+                    log("Pirate Bay Found " + title)
                     return link.get_attribute("href")
                 else:
                     continue

@@ -55,15 +55,17 @@ class StoppableThread(Startable):
 
     def on_stop(self):
         self.tock()
-        if not threading.current_thread() == self.thread:
+        if threading.current_thread() is not self.thread:
             self.thread.join(self.stop_timeout_s)
             if self.thread.is_alive():
                 raise StopTimeoutException()
 
     def started(self):
+        # optional
         pass
 
     def stopped(self):
+        # optional
         pass
 
     def tock(self):

@@ -6,7 +6,7 @@ load_dotenv()
 
 library_path = os.environ.get("PLEX_LIBRARY_PATH")
 if library_path is None:
-    raise Exception("PLEX_LIBRARY_PATH not set")
+    raise RuntimeError("PLEX_LIBRARY_PATH not set")
 
 series_path = os.path.join(library_path, "TV-Shows")
 movies_path = os.path.join(library_path, "Movies")
@@ -17,4 +17,4 @@ def load_folders():
         os.makedirs(series_path, exist_ok=True)
         os.makedirs(movies_path, exist_ok=True)
     else:
-        raise Exception("Library path does not exist ", library_path)
+        raise IOError("Library path does not exist ", library_path)

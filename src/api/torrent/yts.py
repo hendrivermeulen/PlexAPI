@@ -25,7 +25,7 @@ class YTSTorrentBrowser(TorrentBrowser):
         return self.yts_direct_movie_query(title)
 
     def series_search(self, title: string):
-        raise Exception("Not supported")
+        raise NotImplementedError()
 
     def yts_direct_movie_query(self, title: string) -> []:
         try:

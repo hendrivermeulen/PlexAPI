@@ -22,12 +22,10 @@ class TestWatchingNotifier(TestCase, WatchingListener):
         self.notifier.stop()
 
     def started_playing(self, item):
-        super().started_playing(item)
         self.playing = item
         self.started_playing_lock.release()
 
     def stopped_playing(self, item):
-        super().stopped_playing(item)
         self.stopped = item
         self.stopped_playing_lock.release()
 

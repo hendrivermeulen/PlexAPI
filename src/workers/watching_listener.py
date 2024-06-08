@@ -9,10 +9,10 @@ stop_semaphore = threading.Semaphore(0)
 
 class WatchingListener:
     def started_playing(self, item):
-        pass
+        raise NotImplementedError()
 
     def stopped_playing(self, item):
-        pass
+        raise NotImplementedError()
 
 
 class WatchingNotifier(StoppableThread):
@@ -24,23 +24,29 @@ class WatchingNotifier(StoppableThread):
         self.watching_listener = watching_listener
         self.currently_playing = None
 
+    def process_playing(self):
+        for session in self.plex_api.server.sessions():
+            for item in session:
+                title = self.plex_api.get_name(item)
+                if self.currently_playing is None or self.currently_playing is not title:
+                    log("Started playing " + title)
+                    self.currently_playing = title
+                    self.watching_listener.started_playing(title)
+                break
+            break
+
+    def process_stopped(self):
+        log("Stopped playing " + self.currently_playing)
+        self.watching_listener.stopped_playing(self.currently_playing)
+        self.currently_playing = None
+
     def listen(self, data):
         if data['type'] == "playing":
             notification = data["PlaySessionStateNotification"][0]
             if notification["state"] in ["buffering", "playing"]:
-                for session in self.plex_api.server.sessions():
-                    for item in session:
-                        title = self.plex_api.get_name(item)
-                        if self.currently_playing is None or self.currently_playing is not title:
-                            log("Started playing " + title)
-                            self.currently_playing = title
-                            self.watching_listener.started_playing(title)
-                        break
-                    break
+                self.process_playing()
             elif notification["state"] == "stopped":
-                log("Stopped playing " + self.currently_playing)
-                self.watching_listener.stopped_playing(self.currently_playing)
-                self.currently_playing = None
+                self.process_stopped()
 
     def run(self):
         while self.is_running:

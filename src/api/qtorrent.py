@@ -26,11 +26,11 @@ def extract_task(from_file, to_file, secs):
             break
         except:
             time.sleep(secs / 2)
-            pass
+
 
 class QTorrentAPI(StoppableThread):
     def __init__(self, plex_api: PlexAPI):
-        super().__init__()
+        super().__init__("QTorrentAPI")
         self.plex_api = plex_api
         # instantiate a Client using the appropriate WebUI configuration
         conn_info = dict(
@@ -114,7 +114,7 @@ class QTorrentAPI(StoppableThread):
                     while count < 5:
                         info = self.client.torrents_info(torrent_hashes=torrent.hash)[0]
                         eta = info['eta']
-                        if eta < duration_s*0.70:
+                        if eta < duration_s * 0.70:
                             is_streamable = True
                             break
                         time.sleep(3)

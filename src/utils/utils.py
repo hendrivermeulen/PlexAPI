@@ -48,7 +48,7 @@ def contains_at_least_half(title: string, name: string):
 
 def await_value(call: callable, value, timeout_ms: int):
     time_slept_ms = 0
-    while not call() == value:
+    while call() is not value:
         time.sleep(0.1)
         time_slept_ms += 100
         if time_slept_ms >= timeout_ms:
