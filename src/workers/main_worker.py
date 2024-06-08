@@ -13,11 +13,11 @@ class MainWorker(StoppableThread, WatchlistListener, WatchingListener):
     def work(self):
         pass
 
-    def on_start(self):
+    def before_starting(self):
         self.watchlist_scrapper.start()
         self.watchlist_notifier.start()
 
-    def on_stop(self):
+    def before_stop(self):
         self.watchlist_scrapper.stop()
         self.watchlist_notifier.stop()
 

@@ -1,4 +1,18 @@
 from utils.stoppable_thread import StoppableThread
+from requests.exceptions import ConnectionError
+
+has_connection_called_state = False
+
+
+def connection_called():
+    global has_connection_called_state
+    has_connection_called_state = True
+    raise ConnectionError
+
+
+def has_connection_called():
+    global has_connection_called_state
+    return has_connection_called_state
 
 
 class Item:
@@ -9,7 +23,7 @@ class Item:
 
 
 class MyPlexAccount:
-    def get_watchlist(self):
+    def watchlist(self):
         return [
             Item("Spider-man", 2003),
             Item("Spider-man", 2005),

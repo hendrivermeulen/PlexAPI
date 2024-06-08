@@ -1,8 +1,8 @@
 import threading
 from unittest import TestCase
-from unittest.mock import MagicMock
-
-from test_api import TestAPI
+from unittest.mock import MagicMock, Mock
+from test_api import TestAPI, connection_called, has_connection_called
+from utils.utils import await_value
 from workers.watching_listener import WatchingListener, WatchingNotifier
 
 
@@ -35,3 +35,15 @@ class TestWatchingNotifier(TestCase, WatchingListener):
 
         self.assertTrue(self.stopped_playing_lock.acquire(True, 5))
         self.assertEqual("Spider-man 2003", self.stopped)
+
+    def test_default_listener(self):
+        listener = WatchingListener()
+        self.assertRaises(NotImplementedError, lambda: listener.started_playing(""))
+        self.assertRaises(NotImplementedError, lambda: listener.stopped_playing(""))
+
+    def testNoConnection(self):
+        self.notifier.stop()
+        mock = Mock(side_effect=connection_called)
+        self.notifier.plex_api.get_plex_connection = mock
+        self.notifier.start()
+        self.assertTrue(await_value(has_connection_called, True, 10000))

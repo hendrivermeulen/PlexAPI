@@ -8,7 +8,8 @@ logging_lock = threading.Lock()
 
 
 def log_error(message: str):
-    print(message, file=sys.stderr)
+    with logging_lock:
+        print(message, file=sys.stderr)
 
 
 def log(message: str = None, exception: Exception = None):

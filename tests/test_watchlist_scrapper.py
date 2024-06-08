@@ -1,10 +1,9 @@
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 
-from test_api import Item, TestAPI
+from test_api import Item, TestAPI, connection_called, has_connection_called
 from utils.utils import await_value
-from workers.main_worker import MainWorker
-from workers.watchlist_scrapper import WatchlistScrapper
+from workers.watchlist_scrapper import WatchlistScrapper, WatchlistListener
 
 TIMEOUT_MS = 3000
 
@@ -12,7 +11,7 @@ TIMEOUT_MS = 3000
 class TestWatchlistScrapper(TestCase):
 
     def setUp(self):
-        self.worker = MainWorker()
+        self.worker = MagicMock()
 
         self.added_mock = MagicMock()
         self.removed_mock = MagicMock()
@@ -22,13 +21,9 @@ class TestWatchlistScrapper(TestCase):
 
         self.scrapper = WatchlistScrapper([], self.worker)
         self.scrapper.plex_api.get_plex_connection = MagicMock(return_value=TestAPI())
-        self.scrapper.plex_api.get_watchlist = MagicMock(return_value=[
-            Item("Spider-man", 2003),
-            Item("Spider-man", 2005),
-            Item("Spider-man", 2007)
-        ]) # TODO use TestAPI
 
         self.scrapper.start()
+        self.has_connection_called = False
 
     def tearDown(self):
         self.scrapper.stop()
@@ -67,5 +62,14 @@ class TestWatchlistScrapper(TestCase):
         self.assertTrue(await_value(lambda: self.removed_mock.call_count, 3, 1000))
         self.assertEqual(["Ironman 2003"], self.scrapper.watchlist)
 
+    def test_listener(self):
+        listener = WatchlistListener()
+        self.assertRaises(NotImplementedError, lambda: listener.watchlist_item_added(""))
+        self.assertRaises(NotImplementedError, lambda: listener.watchlist_item_removed(""))
 
-
+    def testNoConnection(self):
+        self.scrapper.stop()
+        mock = Mock(side_effect=connection_called)
+        self.scrapper.plex_api.get_plex_connection = mock
+        self.scrapper.start()
+        self.assertTrue(await_value(has_connection_called, True, 10000))

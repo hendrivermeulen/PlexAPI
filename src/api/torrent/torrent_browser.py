@@ -52,7 +52,7 @@ class TorrentBrowser(StoppableThread):
                 self.responses.append(request)
                 self.responses_queue.release()
 
-    def on_stop(self):
+    def before_stop(self):
         self.requests_lock.release()
         self.responses_queue.release()
 
