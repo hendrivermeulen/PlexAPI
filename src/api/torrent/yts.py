@@ -3,21 +3,32 @@ import string
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from api.torrent.torrent_browser import TorrentBrowser
+from api.torrent.torrent_browser import TorrentBrowser, Result, Quality
 from utils.logger import log
 from utils.utils import parse_for_url
 
 
-def extract(keyword, links):
+def get_quality(title) -> Quality:
+    for quality in list(Quality):
+        value: str = quality.value
+        if value.upper() in title.upper():
+            return quality
+    raise RuntimeError("Quality not found")
+
+
+def extract(keyword, links, title):
     sources = []
+    results = []
     for link in links:
         link_title = link.get_attribute("title")
         link_href = link.get_attribute("href")
         if keyword in link_title and " Torrent" in link_title and "/torrent/download/" in link_href:
             if link_href not in sources:
-                log("YTS Found " + link_title.replace("Download ", "").replace(" Torrent", ""))
+                quality = get_quality(link_title)
                 sources.append(link_href)
-    return sources
+                results.append(Result(link_href, quality))
+                log("YTS Found " + title + " " + quality.value)
+    return results
 
 
 class YTSTorrentBrowser(TorrentBrowser):
@@ -39,9 +50,9 @@ class YTSTorrentBrowser(TorrentBrowser):
             links = movie_info.find_elements(by=By.TAG_NAME, value="a")
             # sort results
             sources = []
-            sources += extract("2160p", links)
-            sources += extract("1080p", links)
-            sources += extract("720p", links)
+            sources += extract("2160p", links, title)
+            sources += extract("1080p", links, title)
+            sources += extract("720p", links, title)
             return sources
         except NoSuchElementException:
             return []

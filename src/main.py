@@ -14,7 +14,8 @@ def main():
         worker = MainWorker()
         worker.start()
 
-        input("Press any enter to stop program...\n")
+        log("Press any enter to stop program...\n")
+        input()
     except KeyboardInterrupt:
         log("Closing...")
 

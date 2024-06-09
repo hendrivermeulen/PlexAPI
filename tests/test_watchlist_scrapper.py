@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
 from api.plex import PlexAPI
-from test_api import Item, TestAPI, connection_called, has_connection_called
+from plex_test_api import Item, PlexTestAPI, connection_called, has_connection_called
 from utils.utils import await_value
 from workers.watchlist_scrapper import WatchlistScrapper, WatchlistListener
 
@@ -21,7 +21,7 @@ class TestWatchlistScrapper(TestCase):
         self.worker.watchlist_item_removed = self.removed_mock
 
         self.scrapper = WatchlistScrapper([], self.worker, PlexAPI())
-        self.scrapper.plex_api.get_plex_connection = MagicMock(return_value=TestAPI())
+        self.scrapper.plex_api.get_plex_connection = MagicMock(return_value=PlexTestAPI())
 
         self.scrapper.start()
         self.has_connection_called = False

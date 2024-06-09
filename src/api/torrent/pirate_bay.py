@@ -4,13 +4,9 @@ from enum import Enum
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from api.torrent.torrent_browser import TorrentBrowser
+from api.torrent.torrent_browser import TorrentBrowser, Quality, Result
 from utils.logger import log
 from utils.utils import contains_title
-
-HDR = "2160p HDR"
-
-ATMOS_HDR = "Atmos " + HDR
 
 
 class TYPE(Enum):
@@ -40,59 +36,63 @@ class PirateBayTorrentBrowser(TorrentBrowser):
 
     def pirate_search(self, title: string, cat: string):
         if cat == TYPE.MOVIE:
-            urls = self.pirate_search_for_movie_url(title)
+            results = self.pirate_search_for_movie_url(title)
         else:
-            urls = self.pirate_search_for_series_url(title)
+            results = self.pirate_search_for_series_url(title)
 
         magnets = []
-        for url in urls:
-            self.driver.get(url)
+        final_results: list[Result] = []
+        for result in results:
+            self.driver.get(result.magnet)
             frame = self.driver.find_element(by=By.ID, value="details")
             div = frame.find_element(by=By.CLASS_NAME, value="download")
             link = div.find_element(by=By.TAG_NAME, value="a")
             magnet = link.get_attribute("href")
             if magnet not in magnets:
+                result.magnet = magnet
                 magnets.append(magnet)
+                final_results.append(result)
+                log("Pirate Bay Found " + title + " " + result.quality.value)
 
-        return magnets
+        return final_results
 
     def pirate_search_for_movie_url(self, title: string):
         sources = []
 
         cat = TYPE.MOVIE.value
         # large
-        process(sources, self.pirate_query(title, cat, ATMOS_HDR, 20, 30, 15))
-        process(sources, self.pirate_query(title, cat, HDR, 20, 30, 15))
+        process(sources, self.pirate_query(title, cat, Quality.ATMOS_HDR, 20, 30, 15))
+        process(sources, self.pirate_query(title, cat, Quality.HDR, 20, 30, 15))
         # small
-        process(sources, self.pirate_query(title, cat, ATMOS_HDR, 20, 30, 8))
-        process(sources, self.pirate_query(title, cat, HDR, 20, 30, 8))
+        process(sources, self.pirate_query(title, cat, Quality.ATMOS_HDR, 20, 30, 8))
+        process(sources, self.pirate_query(title, cat, Quality.HDR, 20, 30, 8))
 
         return sources
 
     def pirate_search_for_series_url(self, title: string):
         cat = TYPE.SERIES.value
         # large
-        atmos4k = self.pirate_query(title, cat, ATMOS_HDR, 20, 30, 15)
+        atmos4k = self.pirate_query(title, cat, Quality.ATMOS_HDR, 20, 30, 15)
         if atmos4k:
             return atmos4k
 
-        hdr4k = self.pirate_query(title, cat, HDR, 20, 30, 15)
+        hdr4k = self.pirate_query(title, cat, Quality.HDR, 20, 30, 15)
         if hdr4k:
             return hdr4k
 
         # small
-        atmos4k = self.pirate_query(title, cat, ATMOS_HDR, 20, 30, 8)
+        atmos4k = self.pirate_query(title, cat, Quality.ATMOS_HDR, 20, 30, 8)
         if atmos4k:
             return atmos4k
 
-        hdr4k = self.pirate_query(title, cat, HDR, 20, 30, 8)
+        hdr4k = self.pirate_query(title, cat, Quality.HDR, 20, 30, 8)
         if hdr4k:
             return hdr4k
 
-    def pirate_query(self, title: string, cat: string, quality: string, min_seed: int, max_size: float,
+    def pirate_query(self, title: string, cat: string, quality: Quality, min_seed: int, max_size: float,
                      min_size: float):
         try:
-            title += " " + quality
+            title += " " + str(quality.value)
             query = "https://thepiratebay.party/search/" + title + "/1/99/" + cat
             query = query.replace(" ", "%20")
             # Navigate to a website
@@ -118,8 +118,7 @@ class PirateBayTorrentBrowser(TorrentBrowser):
                     continue
 
                 if contains_title(title, name):
-                    log("Pirate Bay Found " + title)
-                    return link.get_attribute("href")
+                    return Result(link.get_attribute("href"), quality)
                 else:
                     continue
         except NoSuchElementException:

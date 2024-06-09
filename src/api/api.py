@@ -4,6 +4,14 @@ from requests.exceptions import ReadTimeout, ConnectionError
 from utils.logger import log, log_error
 
 
+def repeat_until_process(call: callable, sleep_func: callable):
+    result = call()
+    while result is None or result is False:
+        result = call()
+        sleep_func(3)
+    return result
+
+
 class API:
 
     def __init__(self, name: str):
@@ -29,10 +37,3 @@ class API:
             self._connected = False
             log_error("Lost connection to " + self.name)
             return None
-
-    def repeat_until_process(self, call: callable, sleep_func: callable):
-        result = call()
-        while result is None or result is False:
-            result = call()
-            sleep_func(3)
-        return result

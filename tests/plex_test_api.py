@@ -49,7 +49,7 @@ class AlertListener(StoppableThread):
         })
 
 
-class TestAPI:
+class PlexTestAPI:
     def sessions(self):
         return [[Item("Spider-man", 2003)]]
 

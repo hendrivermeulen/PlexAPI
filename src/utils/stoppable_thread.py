@@ -23,15 +23,21 @@ class StoppableThread(Startable):
             raise StoppedException()
 
     def do_sleep(self, time_s):
-        return not self.sleep_lock.acquire(True, time_s) or self.is_running()
+        if time_s == -1:
+            return not self.sleep_lock.acquire(True) or self.is_running()
+        else:
+            if time_s > 0:
+                return not self.sleep_lock.acquire(True, time_s) or self.is_running()
+            else:
+                return True
 
     def run(self):
+        self.started()
         if self.should_loop:
             try:
                 while self.is_running():
                     self.apply_work()
-                    if self.loop_sleep_time_s > 0:
-                        self.sleep(self.loop_sleep_time_s)
+                    self.sleep(self.loop_sleep_time_s)
             except StoppedException:
                 pass
         else:
@@ -48,6 +54,10 @@ class StoppableThread(Startable):
 
     def work(self):
         raise NoWorkException()
+
+    def started(self):
+        # optional
+        pass
 
     def on_start(self):
         self.before_starting()

@@ -4,7 +4,6 @@ import uuid
 from enum import Enum
 
 from selenium import webdriver
-from selenium.common.exceptions import InvalidSessionIdException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -12,9 +11,34 @@ from webdriver_manager.chrome import ChromeDriverManager
 from utils.stoppable_thread import StoppableThread
 
 
+class Quality(Enum):
+    HDR = "2160p HDR"
+    ATMOS_HDR = "Atmos 2160p HDR"
+    ULTRA_HD = "2160p"
+    FULL_HD = "1080p"
+    HD_READY = "720p"
+
+    def index(self):
+        return list(Quality).index(self)
+
+
+def sort_quality(key: Quality):
+    return key.index()
+
+
 class TYPE(Enum):
     MOVIE = "MOVIE"
     SERIES = "SERIES"
+
+
+class Result:
+    def __init__(self, magnet: str, quality: Quality):
+        self.magnet = magnet
+        self.quality = quality
+
+
+def sort_result(key: Result):
+    return sort_quality(key.quality)
 
 
 class Request:
@@ -27,21 +51,19 @@ class Request:
 
 class TorrentBrowser(StoppableThread):
     def __init__(self):
-        super().__init__("TorrentBrowser", should_loop=True, loop_sleep_time_s=0)
+        super().__init__("TorrentBrowser", should_loop=True, loop_sleep_time_s=-1)
         options = Options()
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
         self.requests: list[Request] = []
-        self.requests_lock = threading.Semaphore(0)
         self.responses: list[Request] = []
         self.responses_queue = threading.Semaphore(0)
         self.responses_lock = threading.Lock()
 
     def work(self):
-        self.requests_lock.acquire()
-        if self.is_running():
+        if self.is_running() and len(self.requests) > 0:
             request = self.requests.pop()
             if request.request_type is TYPE.MOVIE:
                 request.response = self.movie_search(request.title)
@@ -53,13 +75,12 @@ class TorrentBrowser(StoppableThread):
                 self.responses_queue.release()
 
     def before_stop(self):
-        self.requests_lock.release()
         self.responses_queue.release()
 
     def add_concurrent_request(self, title: string, request_type: TYPE):
         request = Request(title, request_type)
         self.requests.append(request)
-        self.requests_lock.release()
+        self.tock()
         return request
 
     def await_request(self, request: Request):
@@ -72,10 +93,10 @@ class TorrentBrowser(StoppableThread):
                         result = self.responses.pop(self.responses.index(request)).response
         return result
 
-    def movie_search(self, title: string):
+    def movie_search(self, title: string) -> list[Result]:
         raise NotImplementedError()
 
-    def series_search(self, title: string):
+    def series_search(self, title: string) -> list[Result]:
         raise NotImplementedError()
 
     def clean_up(self):

@@ -7,7 +7,7 @@ import qbittorrentapi
 from qbittorrentapi import Client
 
 from api.api import API
-from utils.folders import library_path
+from utils.folders import library_path, movies_path, series_path, get_save_path
 
 
 def extract_task(from_file, to_file, secs):
@@ -57,17 +57,11 @@ class QTorrentAPI(API):
         return self.confirm_connection(lambda: self._resume_torrent(self._title_to_hash(title)))
 
     def _add_torrent(self, magnet: str, is_movie: bool, title: string):
-        save_path = library_path
-        if is_movie:
-            save_path += "Movies"
-        else:
-            save_path += "TV-Shows"
-        save_path += "/" + title
         self._api.torrents_add(
-            urls=magnet, is_sequential_download=True, save_path=save_path, tags=title)
+            urls=magnet, is_sequential_download=True, save_path=get_save_path(is_movie, title), tags=title)
         return True
 
-    def add_torrent(self, magnet, is_movie: bool, title: string):
+    def add_torrent(self, magnet: str, is_movie: bool, title: string):
         return self.confirm_connection(lambda: self._add_torrent(magnet, is_movie, title))
 
     def _title_to_hash(self, title):
@@ -88,3 +82,12 @@ class QTorrentAPI(API):
 
     def delete_torrent(self, title):
         return self.confirm_connection(lambda: self._delete_torrent(self._title_to_hash(title)))
+
+    def _get_current_titles(self):
+        titles = []
+        for torrent in self._api.torrents_info():
+            titles.append(torrent["tags"])
+        return titles
+
+    def get_current_titles(self):
+        return self.confirm_connection(self._get_current_titles)

@@ -18,3 +18,10 @@ def load_folders():
         os.makedirs(movies_path, exist_ok=True)
     else:
         raise IOError("Library path does not exist ", library_path)
+
+
+def get_save_path(is_movie: bool, title: str):
+    if is_movie:
+        return os.path.join(movies_path, title)
+    else:
+        return os.path.join(series_path, title)

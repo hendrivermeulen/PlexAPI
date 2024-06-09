@@ -31,14 +31,12 @@ class WatchingNotifier(StoppableThread):
                 for item in session:
                     title = self.plex_api.get_name(item)
                     if self.currently_playing is None or self.currently_playing is not title:
-                        log("Started playing " + title)
                         self.currently_playing = title
                         self.watching_listener.started_playing(title)
                     break
                 break
 
     def process_stopped(self):
-        log("Stopped playing " + self.currently_playing)
         self.watching_listener.stopped_playing(self.currently_playing)
         self.currently_playing = None
 

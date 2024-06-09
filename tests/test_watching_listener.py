@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
 from api.plex import PlexAPI
-from test_api import TestAPI, connection_called, has_connection_called
+from plex_test_api import PlexTestAPI, connection_called, has_connection_called
 from utils.utils import await_value
 from workers.watching_listener import WatchingListener, WatchingNotifier
 
@@ -17,7 +17,7 @@ class TestWatchingNotifier(TestCase, WatchingListener):
         self.stopped = None
 
         self.notifier = WatchingNotifier(self, PlexAPI())
-        self.notifier.plex_api.get_plex_connection = MagicMock(return_value=TestAPI())
+        self.notifier.plex_api.get_plex_connection = MagicMock(return_value=PlexTestAPI())
         self.notifier.start()
 
     def tearDown(self):
