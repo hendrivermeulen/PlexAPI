@@ -34,10 +34,12 @@ class MainWorker(StoppableThread, WatchlistListener, WatchingListener):
 
     def work(self):
         # TODO do not pause streamable findings
+        no_playing_found = True
         for title in self._get_current_torrents():
             with self._playing_lock:
                 if title == self._previously_playing:
                     self._previously_playing = None
+                    no_playing_found = False
                 else:
                     with self._watchlist_lock:
                         if title == self._previous_added_to_watchlist:
@@ -45,6 +47,9 @@ class MainWorker(StoppableThread, WatchlistListener, WatchingListener):
                         else:
                             if title != self._currently_playing:
                                 self._pause_torrent(title)
+
+                if no_playing_found:
+                    self._streamable_finder.resume()
 
     def _get_current_torrents(self):
         torrents = repeat_until_process(
@@ -108,7 +113,6 @@ class MainWorker(StoppableThread, WatchlistListener, WatchingListener):
                 repeat_until_process(lambda: self._qtorrent_api.pause_torrent(title), self.sleep)
 
     def stopped_playing(self, title):
-        self._streamable_finder.resume()
         with self._playing_lock:
             log("Stopped playing " + title)
             if title != self._currently_playing:

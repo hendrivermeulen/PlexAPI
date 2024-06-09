@@ -7,7 +7,7 @@ import qbittorrentapi
 from qbittorrentapi import Client
 
 from api.api import API
-from utils.folders import library_path, movies_path, series_path, get_save_path
+from utils.folders import get_save_path
 
 
 def extract_task(from_file, to_file, secs):
@@ -71,7 +71,7 @@ class QTorrentAPI(API):
     def _get_torrent_eta(self, title):
         for torrent in self._api.torrents_info(tag=title):
             return torrent["eta"]
-        return None
+        return -1
 
     def get_torrent_eta(self, title):
         return self.confirm_connection(lambda: self._get_torrent_eta(title))

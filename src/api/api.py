@@ -1,6 +1,3 @@
-from qbittorrentapi import APIConnectionError
-from requests.exceptions import ReadTimeout, ConnectionError
-
 from utils.logger import log, log_error
 
 
@@ -33,7 +30,7 @@ class API:
                 return call()
             else:
                 return None
-        except ConnectionError | ReadTimeout | APIConnectionError:
+        except Exception: # ConnectionError | ReadTimeout | APIConnectionError
             self._connected = False
             log_error("Lost connection to " + self.name)
             return None

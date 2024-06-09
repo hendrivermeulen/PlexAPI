@@ -39,6 +39,7 @@ class StreamableFinder(StoppableThread):
             if self._latest_request is None:
                 if len(self._backlog) > 0:
                     request = self._backlog.pop()
+                    self._latest_request = request
                 else:
                     return
             else:
@@ -71,11 +72,13 @@ class StreamableFinder(StoppableThread):
 
     def pause(self):
         with self._request_lock:
+            log("Pausing streamable finder")
             self._is_paused = True
             self._latest_request = None
 
     def resume(self):
         with self._request_lock:
+            log("Resuming streamable finder")
             self._is_paused = False
             self.tock()
 
@@ -96,7 +99,10 @@ class StreamableFinder(StoppableThread):
         is_streamable = False
         while count < 3:
             eta = repeat_until_process(lambda: self._qtorrent.get_torrent_eta(video_item.title),
-                                                      self.sleep)
+                                       self.sleep)
+            if eta == -1:
+                raise RuntimeError("Torrent ETA not found")
+
             if eta < video_item.duration_s * 0.70:
                 is_streamable = True
                 break
