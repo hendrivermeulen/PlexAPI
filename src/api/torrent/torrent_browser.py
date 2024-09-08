@@ -1,3 +1,4 @@
+import os
 import string
 import threading
 import uuid
@@ -56,7 +57,12 @@ class TorrentBrowser(StoppableThread):
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
-        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+        chrome_install = ChromeDriverManager().install()
+        folder = os.path.dirname(chrome_install)
+        chromedriver_path = os.path.join(folder, "chromedriver.exe")
+
+        self.driver = webdriver.Chrome(service=Service(chromedriver_path), options=options)
         self.requests: list[Request] = []
         self.responses: list[Request] = []
         self.responses_queue = threading.Semaphore(0)

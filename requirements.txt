@@ -1,10 +1,9 @@
-plexapi==4.15.7
+plexapi==4.15.16
 requests==2.31.0
-selenium==4.16.0
-webdriver-manager==4.0.1
+selenium==4.24.0
+webdriver-manager==4.0.2
 python-dotenv==1.0.0
 qbittorrent-api==2023.11.57
 ffmpeg-python==0.2.0
 websocket-client==1.7.0
-django==5.0.6
 coverage==7.5.3
